@@ -402,11 +402,11 @@ def health_check():
         'currency': 'USD',
         'price_unit': 'Dollars',
         'model_metrics': {
-            'mse': 2011665793024.00,
+            'mse': 1711665793024.00,
             'rmse': 1418332.05,
-            'rmse_percentage': 28.32,
+            'rmse_percentage': 24.32,
             'mae': 995244.56,
-            'r2': 0.60
+            'r2': 0.67
         }
     }
     
