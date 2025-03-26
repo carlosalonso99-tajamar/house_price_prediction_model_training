@@ -20,7 +20,7 @@ Content-Type: application/json
   "Neighborhood": "NridgHt"
 }
 
-### Test Predict - DTO Mínimo
+### Test Predict - 
 POST http://localhost:5000/api/predict
 Content-Type: application/json
 
@@ -41,23 +41,3 @@ Content-Type: application/json
   "Neighborhood": "Sawyer"
 }
 
-### Predict Price using Minimal Input DTO
-POST http://localhost:5000/api/predict
-Content-Type: application/json
-
-{
-  "GrLivArea": 2504,
-  "TotalBsmtSF": 1122,
-  "TotRmsAbvGrd": 11,
-  "YearBuilt": 2005,
-  "YearRemodAdd": 2007,
-  "OverallQual": 9,
-  "OverallCond": 5,
-  "ExterQual": "Gd",
-  "ExterCond": "TA",
-  "GarageCars": 3,
-  "GarageArea": 656,
-  "KitchenQual": "Ex",
-  "FireplaceQu": "Gd",
-  "Neighborhood": "StoneBr"
-}
