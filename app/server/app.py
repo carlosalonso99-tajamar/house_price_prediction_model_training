@@ -20,10 +20,10 @@ CORS(app, resources={
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# === 1) Cargar el preprocesador y selector entrenados (NO se re-ajustan) ===
-PREPROCESSOR_PATH = os.path.join(BASE_DIR, 'models', 'preprocessor.joblib')
-SELECTOR_PATH = os.path.join(BASE_DIR, 'models', 'selector.joblib')
-MODEL_PATH = os.path.join(BASE_DIR, 'models', 'best_model.h5')
+# === 1) Cargar el preprocesador y selector entrenados (no se re-ajustan) ===
+PREPROCESSOR_PATH = os.path.join(BASE_DIR,'models',  'preprocessor.joblib')
+SELECTOR_PATH = os.path.join(BASE_DIR,'models', 'selector.joblib')
+MODEL_PATH = os.path.join(BASE_DIR, 'models','best_model.h5')
 
 try:
     preprocessor = joblib.load(PREPROCESSOR_PATH)
@@ -34,7 +34,7 @@ except Exception as e:
     preprocessor = None
     selector = None
 
-# Si tu modelo usaba alguna función custom, defínela:
+# Si el modelo usaba alguna función custom, defínela:
 def custom_mse(y_true, y_pred):
     return tf.reduce_mean(tf.square(y_pred - y_true))
 
@@ -51,13 +51,13 @@ else:
     print("Modelo no encontrado:", MODEL_PATH)
     model = None
 
-# === 2) Cargar el mismo test set que usaste en el Notebook ===
-X_TEST_PATH = os.path.join(BASE_DIR,'data', 'test', 'X_test.csv')
-Y_TEST_PATH = os.path.join(BASE_DIR,'data', 'test', 'y_test.csv')
+# === 2) Cargar el mismo test set que en el notebook ===
+X_TEST_PATH = os.path.join(BASE_DIR, 'data', 'test', 'X_test.csv')
+Y_TEST_PATH = os.path.join(BASE_DIR, 'data', 'test', 'y_test.csv')
 
 try:
     X_test = pd.read_csv(X_TEST_PATH)
-    # Se asume que y_test.csv tiene una columna "SalePrice"
+    # Se asume que y_test.csv tiene una columna 'SalePrice'
     y_test = pd.read_csv(Y_TEST_PATH)['SalePrice']
     print("X_test, y_test cargados correctamente.")
 except Exception as e:
@@ -65,54 +65,22 @@ except Exception as e:
     X_test = None
     y_test = None
 
-# === ENDPOINT DE EVALUACIÓN ===
-@app.route('/api/evaluate', methods=['GET'])
-def evaluate():
-    if model is None or preprocessor is None or selector is None or X_test is None or y_test is None:
-        return jsonify({'error': 'Evaluation not available'}), 500
-    try:
-        # Transformar X_test usando el preprocesador y selector ya ajustados en el Notebook
-        X_test_pre = preprocessor.transform(X_test)
-        X_test_sel = selector.transform(X_test_pre)
-
-        # Realizar la predicción (el modelo se entrenó con log1p)
-        y_pred_log = model.predict(X_test_sel)
-        y_pred = np.expm1(y_pred_log).flatten()
-
-        # Invertir log1p en y_test y convertir a array de NumPy para iterar
-        y_test_exp = np.expm1(y_test.values)
-
-        # Calcular métricas
-        rmse = np.sqrt(mean_squared_error(y_test_exp, y_pred))
-        mae = mean_absolute_error(y_test_exp, y_pred)
-        r2 = r2_score(y_test_exp, y_pred)
-        rmsep = (rmse / np.mean(y_test_exp)) * 100
-
-        metrics = {
-            'MAE': float(mae),
-            'RMSE': float(rmse),
-            'R²': float(r2),
-            'RMSE (%)': f"{rmsep:.2f}%"
-        }
-
-        # Comparativa: primeras 10 filas
-        comparison = []
-        n = min(10, len(y_test_exp))
-        for i in range(n):
-            comparison.append({
-                'Precio Real (USD)': float(y_test_exp[i]),
-                'Precio Predicho (USD)': float(y_pred[i]),
-                'Error Absoluto (USD)': float(abs(y_test_exp[i] - y_pred[i]))
-            })
-
-        return jsonify({
-            'metrics': metrics,
-            'comparison': comparison
-        })
-    except Exception as e:
-        print("Error during evaluation:", e)
-        print(traceback.format_exc())
-        return jsonify({'error': f"Error during evaluation: {str(e)}"}), 500
+# Función auxiliar para preparar los datos de entrada
+def prepare_input_data(user_data):
+    """
+    Construye un DataFrame con todas las columnas que se usaron para ajustar el preprocesador.
+    Si el preprocesador fue ajustado sobre un DataFrame, usará su atributo feature_names_in_;
+    de lo contrario, usará las claves de user_data.
+    Las columnas que no se reciban se rellenan con NaN, y el pipeline se encargará del imputer.
+    """
+    if hasattr(preprocessor, "feature_names_in_"):
+        training_columns = list(preprocessor.feature_names_in_)
+    else:
+        training_columns = list(user_data.keys())
+    full_data = {col: np.nan for col in training_columns}
+    full_data.update(user_data)
+    input_df = pd.DataFrame([full_data])
+    return input_df
 
 # === ENDPOINT DE PREDICCIÓN ===
 @app.route('/api/predict', methods=['POST', 'OPTIONS'])
@@ -121,14 +89,12 @@ def predict():
         return '', 204
     try:
         data = request.get_json()
-        # Se asume que el JSON contiene los campos requeridos, por ejemplo:
-        # { "GrLivArea": 1500, "TotalBsmtSF": 800, ... }
-        # Aquí convertimos el JSON a DataFrame:
-        input_df = pd.DataFrame([data])
-        # Transformar con el preprocesador y luego aplicar el selector
+        # Preparar el DataFrame de entrada a partir de los datos recibidos
+        input_df = prepare_input_data(data)
+        # Transformar con el preprocesador y aplicar el selector
         input_pre = preprocessor.transform(input_df)
         input_sel = selector.transform(input_pre)
-        # Realizar la predicción (modelo entrenado sobre log1p)
+        # Realizar la predicción (se asume que el modelo entrenó con np.log1p)
         y_pred_log = model.predict(input_sel)
         y_pred = np.expm1(y_pred_log).flatten()
         price_in_dollars = float(y_pred[0])
@@ -145,6 +111,49 @@ def predict():
         print("Error during prediction:", e)
         print(traceback.format_exc())
         return jsonify({'error': f"Error during prediction: {str(e)}"}), 500
+
+# === ENDPOINT DE EVALUACIÓN ===
+@app.route('/api/evaluate', methods=['GET'])
+def evaluate_endpoint():
+    if model is None or preprocessor is None or selector is None or X_test is None or y_test is None:
+        return jsonify({'error': 'Evaluation not available'}), 500
+    try:
+        # Transformar X_test con el preprocesador y selector que se ajustaron en el notebook
+        X_test_pre = preprocessor.transform(X_test)
+        X_test_sel = selector.transform(X_test_pre)
+        # Predicción (modelo entrenado con log1p)
+        y_pred_log = model.predict(X_test_sel)
+        y_pred = np.expm1(y_pred_log).flatten()
+        # Invertir log1p en y_test y convertir a array de NumPy
+        y_test_exp = np.expm1(y_test.values)
+        # Calcular métricas
+        rmse = np.sqrt(mean_squared_error(y_test_exp, y_pred))
+        mae = mean_absolute_error(y_test_exp, y_pred)
+        r2 = r2_score(y_test_exp, y_pred)
+        rmsep = (rmse / np.mean(y_test_exp)) * 100
+        metrics = {
+            'MAE': float(mae),
+            'RMSE': float(rmse),
+            'R²': float(r2),
+            'RMSE (%)': f"{rmsep:.2f}%"
+        }
+        # Comparativa (primeras 10 filas)
+        comparison = []
+        n = min(10, len(y_test_exp))
+        for i in range(n):
+            comparison.append({
+                'Precio Real (USD)': float(y_test_exp[i]),
+                'Precio Predicho (USD)': float(y_pred[i]),
+                'Error Absoluto (USD)': float(abs(y_test_exp[i] - y_pred[i]))
+            })
+        return jsonify({
+            'metrics': metrics,
+            'comparison': comparison
+        })
+    except Exception as e:
+        print("Error during evaluation:", e)
+        print(traceback.format_exc())
+        return jsonify({'error': f"Error during evaluation: {str(e)}"}), 500
 
 # === ENDPOINT DE HEALTH CHECK ===
 @app.route('/api/health', methods=['GET'])

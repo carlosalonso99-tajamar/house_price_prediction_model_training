@@ -26,40 +26,40 @@
 </head>
 <body>
   <div class="container mt-5">
-    
-    
     <!-- Estado del servidor -->
     <div id="serverStatus" class="alert alert-info mb-4">
       Checking server status...
     </div>
+    
     <div class="mt-5">
-        <h2 class="text-center mb-4">Model Evaluation</h2>
-        <div id="evaluationStatus" class="alert alert-info mb-4">
-          Loading evaluation...
-        </div>
-        <div id="metricsContainer" style="display:none;">
-          <h3>Model Performance Metrics</h3>
-          <div id="metricsGrid" class="d-flex flex-wrap justify-content-around">
-            <!-- Tarjetas de métricas se insertarán aquí -->
-          </div>
-        </div>
-        <div id="comparisonContainer" style="display:none;" class="mt-4">
-          <h3>Comparison: Real vs. Predicted Prices</h3>
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Real Price (USD)</th>
-                <th>Predicted Price (USD)</th>
-                <th>Absolute Error (USD)</th>
-              </tr>
-            </thead>
-            <tbody id="comparisonTable">
-              <!-- Filas se insertarán dinámicamente -->
-            </tbody>
-          </table>
+      <h2 class="text-center mb-4">Model Evaluation</h2>
+      <div id="evaluationStatus" class="alert alert-info mb-4">
+        Loading evaluation...
+      </div>
+      <div id="metricsContainer" style="display:none;">
+        <h3>Model Performance Metrics</h3>
+        <div id="metricsGrid" class="d-flex flex-wrap justify-content-around">
+          <!-- Tarjetas de métricas se insertarán aquí -->
         </div>
       </div>
+      <div id="comparisonContainer" style="display:none;" class="mt-4">
+        <h3>Comparison: Real vs. Predicted Prices</h3>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Real Price (USD)</th>
+              <th>Predicted Price (USD)</th>
+              <th>Absolute Error (USD)</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonTable">
+            <!-- Filas se insertarán dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
     <h1 class="text-center mb-4">House Price Predictor - Advanced Model</h1>
     <!-- Formulario de predicción -->
     <form id="predictionForm">
@@ -186,9 +186,6 @@
       <p id="errorMessage"></p>
     </div>
     
-    <!-- Sección de evaluación del modelo -->
-    
-    
   </div>
   
   <script>
@@ -212,50 +209,50 @@
     
     // Función para manejar el envío del formulario de predicción
     document.getElementById("predictionForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      // Ocultar resultados y errores previos
-      document.getElementById("resultBox").style.display = "none";
-      document.getElementById("errorBox").style.display = "none";
-      
-      // Recopilar datos de entrada
-      const formData = {
-        GrLivArea: parseFloat(document.getElementById("GrLivArea").value),
-        TotalBsmtSF: parseFloat(document.getElementById("TotalBsmtSF").value),
-        TotRmsAbvGrd: parseFloat(document.getElementById("TotRmsAbvGrd").value),
-        YearBuilt: parseInt(document.getElementById("YearBuilt").value),
-        YearRemodAdd: parseInt(document.getElementById("YearRemodAdd").value),
-        OverallQual: parseFloat(document.getElementById("OverallQual").value),
-        OverallCond: parseFloat(document.getElementById("OverallCond").value),
-        ExterQual: document.getElementById("ExterQual").value,
-        ExterCond: document.getElementById("ExterCond").value,
-        GarageCars: parseFloat(document.getElementById("GarageCars").value),
-        GarageArea: parseFloat(document.getElementById("GarageArea").value),
-        KitchenQual: document.getElementById("KitchenQual").value,
-        FireplaceQu: document.getElementById("FireplaceQu").value,
-        Neighborhood: document.getElementById("Neighborhood").value
-      };
-      
-      try {
-        const response = await fetch("http://localhost:5000/api/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-        
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Prediction failed");
+        e.preventDefault();
+
+        // Ocultar resultados y errores previos
+        document.getElementById("resultBox").style.display = "none";
+        document.getElementById("errorBox").style.display = "none";
+
+        const formData = {
+            GrLivArea: parseFloat(document.getElementById("GrLivArea").value),
+            TotalBsmtSF: parseFloat(document.getElementById("TotalBsmtSF").value),
+            TotRmsAbvGrd: parseFloat(document.getElementById("TotRmsAbvGrd").value),
+            YearBuilt: parseInt(document.getElementById("YearBuilt").value),
+            YearRemodAdd: parseInt(document.getElementById("YearRemodAdd").value),
+            OverallQual: parseFloat(document.getElementById("OverallQual").value),
+            OverallCond: parseFloat(document.getElementById("OverallCond").value),
+            ExterQual: document.getElementById("ExterQual").value,
+            ExterCond: document.getElementById("ExterCond").value,
+            GarageCars: parseFloat(document.getElementById("GarageCars").value),
+            GarageArea: parseFloat(document.getElementById("GarageArea").value),
+            KitchenQual: document.getElementById("KitchenQual").value,
+            FireplaceQu: document.getElementById("FireplaceQu").value,
+            Neighborhood: document.getElementById("Neighborhood").value
+        };
+
+        try {
+            const response = await fetch("http://localhost:5000/api/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            console.log("Respuesta del endpoint:", data);
+            if (!response.ok) {
+            throw new Error(data.error || "Prediction failed");
+            }
+            
+            // Aquí se asigna directamente price_formatted (ya es una cadena)
+            document.getElementById("predictedPrice").textContent = data.prediction.price_formatted;
+            document.getElementById("resultBox").style.display = "block";
+        } catch (error) {
+            document.getElementById("errorMessage").textContent = error.message;
+            document.getElementById("errorBox").style.display = "block";
         }
-        
-        // Mostrar la predicción
-        document.getElementById("predictedPrice").textContent = data.prediction.price_formatted.formatted;
-        document.getElementById("resultBox").style.display = "block";
-      } catch (error) {
-        document.getElementById("errorMessage").textContent = error.message;
-        document.getElementById("errorBox").style.display = "block";
-      }
-    });
+        });
     
     // Función para cargar la evaluación del modelo
     async function loadEvaluation() {

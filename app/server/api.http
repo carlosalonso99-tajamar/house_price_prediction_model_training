@@ -19,3 +19,45 @@ Content-Type: application/json
   "FireplaceQu": "TA",
   "Neighborhood": "NridgHt"
 }
+
+### Test Predict - DTO Mínimo
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "GrLivArea": 1068,
+  "TotalBsmtSF": 1059,
+  "TotRmsAbvGrd": 6,
+  "YearBuilt": 1963,
+  "YearRemodAdd": 2003,
+  "OverallQual": 6,
+  "OverallCond": 8,
+  "ExterQual": "TA",
+  "ExterCond": "TA",
+  "GarageCars": 1,
+  "GarageArea": 264,
+  "KitchenQual": "TA",
+  "FireplaceQu": "NA",
+  "Neighborhood": "Sawyer"
+}
+
+### Predict Price using Minimal Input DTO
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "GrLivArea": 2504,
+  "TotalBsmtSF": 1122,
+  "TotRmsAbvGrd": 11,
+  "YearBuilt": 2005,
+  "YearRemodAdd": 2007,
+  "OverallQual": 9,
+  "OverallCond": 5,
+  "ExterQual": "Gd",
+  "ExterCond": "TA",
+  "GarageCars": 3,
+  "GarageArea": 656,
+  "KitchenQual": "Ex",
+  "FireplaceQu": "Gd",
+  "Neighborhood": "StoneBr"
+}

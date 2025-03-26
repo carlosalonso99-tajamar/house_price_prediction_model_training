@@ -64,7 +64,35 @@ except Exception as e:
     print("Error cargando X_test / y_test:", e)
     X_test = None
     y_test = None
-
+# === ENDPOINT DE PREDICCIÓN ===
+@app.route('/api/predict', methods=['POST', 'OPTIONS'])
+def predict():
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        data = request.get_json()
+        # Preparar el DataFrame de entrada a partir de los datos recibidos
+        input_df = prepare_input_data(data)
+        # Transformar con el preprocesador y aplicar el selector
+        input_pre = preprocessor.transform(input_df)
+        input_sel = selector.transform(input_pre)
+        # Realizar la predicción (se asume que el modelo entrenó con log1p)
+        y_pred_log = model.predict(input_sel)
+        y_pred = np.expm1(y_pred_log).flatten()
+        price_in_dollars = float(y_pred[0])
+        response = {
+            'prediction': {
+                'price_in_dollars': price_in_dollars,
+                'price_formatted': f"${price_in_dollars:,.2f}",
+                'currency': 'USD'
+            },
+            'input_data': data
+        }
+        return jsonify(response)
+    except Exception as e:
+        print("Error during prediction:", e)
+        print(traceback.format_exc())
+        return jsonify({'error': f"Error during prediction: {str(e)}"}), 500
 # === ENDPOINT DE EVALUACIÓN ===
 @app.route('/api/evaluate', methods=['GET'])
 def evaluate():
