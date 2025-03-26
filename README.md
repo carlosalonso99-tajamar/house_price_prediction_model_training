@@ -1,3 +1,6 @@
+- El Notebook que he usado es : [notebook](training_model_house_dani_dataset.ipynb)
+- Hay otros con los que he hecho mas pruebas con el dataset original pero con ese he sacado los mejores resultados
+
 # House Price Prediction App
 
 Esta aplicación permite predecir el precio de una casa basado en sus características, utilizando un modelo de Machine Learning entrenado con datos reales.

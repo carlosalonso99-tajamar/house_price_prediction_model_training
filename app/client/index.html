@@ -1,332 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House Price Predictor</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .result-box {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        }
-        .error-box {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .input-summary {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .metrics-container {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .metric-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        
-        .metric-value {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #0d6efd;
-            margin: 5px 0;
-        }
-        
-        .metric-label {
-            font-size: 0.9em;
-            color: #6c757d;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>House Price Predictor - Advanced Model</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .result-box, .error-box {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .result-box { background-color: #f8f9fa; }
+    .error-box {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    /* Estilos para las tarjetas de métricas */
+    .card {
+      width: 150px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">House Price Prediction</h1>
-        
-        <!-- Server Status Alert -->
-        <div id="serverStatus" class="alert alert-info mb-4">
-            Checking server status...
-        </div>
-        
-        <!-- Métricas del modelo -->
-        <div class="metrics-container">
-            <h3 class="text-center mb-3">Model Performance Metrics</h3>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value" id="mse">-</div>
-                    <div class="metric-label">MSE</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="rmse">-</div>
-                    <div class="metric-label">RMSE</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="rmse-percentage">-</div>
-                    <div class="metric-label">RMSE (%)</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="mae">-</div>
-                    <div class="metric-label">MAE</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="r2">-</div>
-                    <div class="metric-label">R²</div>
-                </div>
-            </div>
-        </div>
-
-        <form id="predictionForm">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="area" class="form-label">Area (square feet)</label>
-                    <input type="number" class="form-control" id="area" required min="1" max="1000000">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="bedrooms" class="form-label">Number of Bedrooms</label>
-                    <input type="number" class="form-control" id="bedrooms" required min="1" max="10">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="bathrooms" class="form-label">Number of Bathrooms</label>
-                    <input type="number" class="form-control" id="bathrooms" required min="1" max="10">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="stories" class="form-label">Number of Stories</label>
-                    <input type="number" class="form-control" id="stories" required min="1" max="5">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="mainroad" class="form-label">Main Road Access</label>
-                    <select class="form-select" id="mainroad" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="guestroom" class="form-label">Guest Room</label>
-                    <select class="form-select" id="guestroom" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="basement" class="form-label">Basement</label>
-                    <select class="form-select" id="basement" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="hotwaterheating" class="form-label">Hot Water Heating</label>
-                    <select class="form-select" id="hotwaterheating" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="airconditioning" class="form-label">Air Conditioning</label>
-                    <select class="form-select" id="airconditioning" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="parking" class="form-label">Number of Parking Spots</label>
-                    <input type="number" class="form-control" id="parking" required min="0" max="5">
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="prefarea" class="form-label">Preferred Area</label>
-                    <select class="form-select" id="prefarea" required>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="furnishingstatus" class="form-label">Furnishing Status</label>
-                    <select class="form-select" id="furnishingstatus" required>
-                        <option value="furnished">Furnished</option>
-                        <option value="semi-furnished">Semi-furnished</option>
-                        <option value="unfurnished">Unfurnished</option>
-                    </select>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Predict Price</button>
-        </form>
-
-        <div id="resultBox" class="result-box">
-            <h3>Predicted Price</h3>
-            <p id="predictedPrice" class="h4"></p>
-            <p id="inputSummary" class="text-muted"></p>
-        </div>
-
-        <div id="errorBox" class="error-box">
-            <h4>Error</h4>
-            <p id="errorMessage"></p>
-        </div>
+  <div class="container mt-5">
+    
+    
+    <!-- Estado del servidor -->
+    <div id="serverStatus" class="alert alert-info mb-4">
+      Checking server status...
     </div>
-
-    <script>
-        // Llamar a checkServerStatus cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            checkServerStatus();
+    <div class="mt-5">
+        <h2 class="text-center mb-4">Model Evaluation</h2>
+        <div id="evaluationStatus" class="alert alert-info mb-4">
+          Loading evaluation...
+        </div>
+        <div id="metricsContainer" style="display:none;">
+          <h3>Model Performance Metrics</h3>
+          <div id="metricsGrid" class="d-flex flex-wrap justify-content-around">
+            <!-- Tarjetas de métricas se insertarán aquí -->
+          </div>
+        </div>
+        <div id="comparisonContainer" style="display:none;" class="mt-4">
+          <h3>Comparison: Real vs. Predicted Prices</h3>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Real Price (USD)</th>
+                <th>Predicted Price (USD)</th>
+                <th>Absolute Error (USD)</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonTable">
+              <!-- Filas se insertarán dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <h1 class="text-center mb-4">House Price Predictor - Advanced Model</h1>
+    <!-- Formulario de predicción -->
+    <form id="predictionForm">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="GrLivArea" class="form-label">Living Area (sq ft)</label>
+          <input type="number" class="form-control" id="GrLivArea" required min="1" placeholder="Ej: 1500">
+        </div>
+        <div class="col-md-6">
+          <label for="TotalBsmtSF" class="form-label">Total Basement Area (sq ft)</label>
+          <input type="number" class="form-control" id="TotalBsmtSF" required min="0" placeholder="Ej: 800">
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="TotRmsAbvGrd" class="form-label">Total Rooms Above Ground</label>
+          <input type="number" class="form-control" id="TotRmsAbvGrd" required min="1" placeholder="Ej: 6">
+        </div>
+        <div class="col-md-6">
+          <label for="YearBuilt" class="form-label">Year Built</label>
+          <input type="number" class="form-control" id="YearBuilt" required min="1800" max="2025" placeholder="Ej: 1990">
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="YearRemodAdd" class="form-label">Year Remodeled/Added</label>
+          <input type="number" class="form-control" id="YearRemodAdd" required min="1800" max="2025" placeholder="Ej: 2000">
+        </div>
+        <div class="col-md-6">
+          <label for="OverallQual" class="form-label">Overall Quality (1-10)</label>
+          <input type="number" class="form-control" id="OverallQual" required min="1" max="10" placeholder="Ej: 7">
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="OverallCond" class="form-label">Overall Condition (1-10)</label>
+          <input type="number" class="form-control" id="OverallCond" required min="1" max="10" placeholder="Ej: 5">
+        </div>
+        <div class="col-md-6">
+          <label for="ExterQual" class="form-label">Exterior Quality</label>
+          <select class="form-select" id="ExterQual" required>
+            <option value="Ex">Excellent</option>
+            <option value="Gd">Good</option>
+            <option value="TA">Typical/Average</option>
+            <option value="Fa">Fair</option>
+            <option value="Po">Poor</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="ExterCond" class="form-label">Exterior Condition</label>
+          <select class="form-select" id="ExterCond" required>
+            <option value="Ex">Excellent</option>
+            <option value="Gd">Good</option>
+            <option value="TA">Typical/Average</option>
+            <option value="Fa">Fair</option>
+            <option value="Po">Poor</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="GarageCars" class="form-label">Garage Capacity (cars)</label>
+          <input type="number" class="form-control" id="GarageCars" required min="0" placeholder="Ej: 2">
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="GarageArea" class="form-label">Garage Area (sq ft)</label>
+          <input type="number" class="form-control" id="GarageArea" required min="0" placeholder="Ej: 500">
+        </div>
+        <div class="col-md-6">
+          <label for="KitchenQual" class="form-label">Kitchen Quality</label>
+          <select class="form-select" id="KitchenQual" required>
+            <option value="Ex">Excellent</option>
+            <option value="Gd">Good</option>
+            <option value="TA">Typical/Average</option>
+            <option value="Fa">Fair</option>
+            <option value="Po">Poor</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="FireplaceQu" class="form-label">Fireplace Quality</label>
+          <select class="form-select" id="FireplaceQu" required>
+            <option value="Ex">Excellent</option>
+            <option value="Gd">Good</option>
+            <option value="TA">Typical/Average</option>
+            <option value="Fa">Fair</option>
+            <option value="Po">Poor</option>
+            <option value="NA">N/A</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="Neighborhood" class="form-label">Neighborhood</label>
+          <select class="form-select" id="Neighborhood" required>
+            <option value="NridgHt">NridgHt</option>
+            <option value="StoneBr">StoneBr</option>
+            <option value="NoRidge">NoRidge</option>
+            <option value="CollgCr">CollgCr</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Predict Price</button>
+    </form>
+    
+    <!-- Caja de resultados de predicción -->
+    <div id="resultBox" class="result-box">
+      <h3>Predicted Price</h3>
+      <p id="predictedPrice" class="h4"></p>
+    </div>
+    
+    <!-- Caja de errores -->
+    <div id="errorBox" class="error-box">
+      <h4>Error</h4>
+      <p id="errorMessage"></p>
+    </div>
+    
+    <!-- Sección de evaluación del modelo -->
+    
+    
+  </div>
+  
+  <script>
+    // Función para verificar el estado del servidor
+    async function checkServerStatus() {
+      try {
+        const response = await fetch("http://localhost:5000/api/health");
+        const data = await response.json();
+        if (data.status === "healthy") {
+          document.getElementById("serverStatus").textContent = "Server Status: Healthy";
+          document.getElementById("serverStatus").className = "alert alert-success";
+        } else {
+          document.getElementById("serverStatus").textContent = "Server Status: Degraded";
+          document.getElementById("serverStatus").className = "alert alert-warning";
+        }
+      } catch (error) {
+        document.getElementById("serverStatus").textContent = "Server Status: Error";
+        document.getElementById("serverStatus").className = "alert alert-danger";
+      }
+    }
+    
+    // Función para manejar el envío del formulario de predicción
+    document.getElementById("predictionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      // Ocultar resultados y errores previos
+      document.getElementById("resultBox").style.display = "none";
+      document.getElementById("errorBox").style.display = "none";
+      
+      // Recopilar datos de entrada
+      const formData = {
+        GrLivArea: parseFloat(document.getElementById("GrLivArea").value),
+        TotalBsmtSF: parseFloat(document.getElementById("TotalBsmtSF").value),
+        TotRmsAbvGrd: parseFloat(document.getElementById("TotRmsAbvGrd").value),
+        YearBuilt: parseInt(document.getElementById("YearBuilt").value),
+        YearRemodAdd: parseInt(document.getElementById("YearRemodAdd").value),
+        OverallQual: parseFloat(document.getElementById("OverallQual").value),
+        OverallCond: parseFloat(document.getElementById("OverallCond").value),
+        ExterQual: document.getElementById("ExterQual").value,
+        ExterCond: document.getElementById("ExterCond").value,
+        GarageCars: parseFloat(document.getElementById("GarageCars").value),
+        GarageArea: parseFloat(document.getElementById("GarageArea").value),
+        KitchenQual: document.getElementById("KitchenQual").value,
+        FireplaceQu: document.getElementById("FireplaceQu").value,
+        Neighborhood: document.getElementById("Neighborhood").value
+      };
+      
+      try {
+        const response = await fetch("http://localhost:5000/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
         });
-
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Hide previous results
-            document.getElementById('resultBox').style.display = 'none';
-            document.getElementById('errorBox').style.display = 'none';
-            
-            // Get form data
-            const formData = {
-                area: parseFloat(document.getElementById('area').value),
-                bedrooms: parseFloat(document.getElementById('bedrooms').value),
-                bathrooms: parseFloat(document.getElementById('bathrooms').value),
-                stories: parseFloat(document.getElementById('stories').value),
-                mainroad: document.getElementById('mainroad').value,
-                guestroom: document.getElementById('guestroom').value,
-                basement: document.getElementById('basement').value,
-                hotwaterheating: document.getElementById('hotwaterheating').value,
-                airconditioning: document.getElementById('airconditioning').value,
-                parking: parseFloat(document.getElementById('parking').value),
-                prefarea: document.getElementById('prefarea').value,
-                furnishingstatus: document.getElementById('furnishingstatus').value
-            };
-
-            try {
-                const response = await fetch('http://localhost:5000/api/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Prediction failed');
-                }
-
-                // Display result
-                const resultBox = document.getElementById('resultBox');
-                const predictedPrice = document.getElementById('predictedPrice');
-                const inputSummary = document.getElementById('inputSummary');
-                
-                predictedPrice.textContent = data.prediction.price_formatted.formatted;
-                
-                // Create input summary
-                const summary = [
-                    `${formData.area.toLocaleString()} sq ft`,
-                    `${formData.bedrooms} bedroom${formData.bedrooms !== 1 ? 's' : ''}`,
-                    `${formData.bathrooms} bathroom${formData.bathrooms !== 1 ? 's' : ''}`,
-                    `${formData.stories} story${formData.stories !== 1 ? 's' : ''}`,
-                    formData.mainroad === 'yes' ? 'Main road access' : 'No main road access',
-                    formData.guestroom === 'yes' ? 'Guest room' : 'No guest room',
-                    formData.basement === 'yes' ? 'Basement' : 'No basement',
-                    formData.hotwaterheating === 'yes' ? 'Hot water heating' : 'No hot water heating',
-                    formData.airconditioning === 'yes' ? 'Air conditioning' : 'No air conditioning',
-                    `${formData.parking} parking spot${formData.parking !== 1 ? 's' : ''}`,
-                    formData.prefarea === 'yes' ? 'Preferred area' : 'Not preferred area',
-                    `Furnishing: ${formData.furnishingstatus}`
-                ].join(' • ');
-                
-                inputSummary.textContent = summary;
-                resultBox.style.display = 'block';
-                
-            } catch (error) {
-                // Display error
-                const errorBox = document.getElementById('errorBox');
-                const errorMessage = document.getElementById('errorMessage');
-                errorMessage.textContent = error.message;
-                errorBox.style.display = 'block';
-            }
+        
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Prediction failed");
+        }
+        
+        // Mostrar la predicción
+        document.getElementById("predictedPrice").textContent = data.prediction.price_formatted.formatted;
+        document.getElementById("resultBox").style.display = "block";
+      } catch (error) {
+        document.getElementById("errorMessage").textContent = error.message;
+        document.getElementById("errorBox").style.display = "block";
+      }
+    });
+    
+    // Función para cargar la evaluación del modelo
+    async function loadEvaluation() {
+      try {
+        const response = await fetch("http://localhost:5000/api/evaluate");
+        const data = await response.json();
+        
+        // Actualizar el cuadro de métricas
+        const metricsGrid = document.getElementById("metricsGrid");
+        metricsGrid.innerHTML = `
+          <div class="card m-2 p-3 text-center">
+            <h4>${data.metrics.MAE.toFixed(2)}</h4>
+            <p>MAE</p>
+          </div>
+          <div class="card m-2 p-3 text-center">
+            <h4>${data.metrics.RMSE.toFixed(2)}</h4>
+            <p>RMSE</p>
+          </div>
+          <div class="card m-2 p-3 text-center">
+            <h4>${data.metrics["R²"].toFixed(2)}</h4>
+            <p>R²</p>
+          </div>
+          <div class="card m-2 p-3 text-center">
+            <h4>${data.metrics["RMSE (%)"]}</h4>
+            <p>RMSE (%)</p>
+          </div>
+        `;
+        document.getElementById("metricsContainer").style.display = "block";
+        
+        // Actualizar la tabla comparativa
+        const comparisonTable = document.getElementById("comparisonTable");
+        comparisonTable.innerHTML = "";
+        data.comparison.forEach((item, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item["Precio Real (USD)"].toFixed(2)}</td>
+            <td>${item["Precio Predicho (USD)"].toFixed(2)}</td>
+            <td>${item["Error Absoluto (USD)"].toFixed(2)}</td>
+          `;
+          comparisonTable.appendChild(row);
         });
-
-        // Función para formatear números grandes
-        function formatLargeNumber(num) {
-            if (num >= 1000000) {
-                return (num / 1000000).toFixed(2) + 'M';
-            } else if (num >= 1000) {
-                return (num / 1000).toFixed(2) + 'K';
-            }
-            return num.toFixed(2);
-        }
-
-        // Función para actualizar las métricas
-        function updateMetrics(metrics) {
-            document.getElementById('mse').textContent = formatLargeNumber(metrics.mse);
-            document.getElementById('rmse').textContent = formatLargeNumber(metrics.rmse);
-            document.getElementById('rmse-percentage').textContent = metrics.rmse_percentage.toFixed(2) + '%';
-            document.getElementById('mae').textContent = formatLargeNumber(metrics.mae);
-            document.getElementById('r2').textContent = metrics.r2.toFixed(2);
-        }
-
-        // Función para verificar el estado del servidor
-        async function checkServerStatus() {
-            try {
-                const response = await fetch('http://localhost:5000/api/health');
-                const data = await response.json();
-                
-                if (data.status === 'healthy') {
-                    document.getElementById('serverStatus').textContent = 'Server Status: Healthy';
-                    document.getElementById('serverStatus').className = 'alert alert-success';
-                    
-                    // Actualizar métricas si están disponibles
-                    if (data.model_metrics) {
-                        updateMetrics(data.model_metrics);
-                    }
-                } else {
-                    document.getElementById('serverStatus').textContent = 'Server Status: Degraded';
-                    document.getElementById('serverStatus').className = 'alert alert-warning';
-                }
-            } catch (error) {
-                document.getElementById('serverStatus').textContent = 'Server Status: Error';
-                document.getElementById('serverStatus').className = 'alert alert-danger';
-            }
-        }
-    </script>
+        document.getElementById("comparisonContainer").style.display = "block";
+        
+        // Actualizar estado de evaluación
+        document.getElementById("evaluationStatus").className = "alert alert-success";
+        document.getElementById("evaluationStatus").textContent = "Evaluation loaded successfully.";
+      } catch (error) {
+        document.getElementById("evaluationStatus").className = "alert alert-danger";
+        document.getElementById("evaluationStatus").textContent = "Error loading evaluation: " + error.message;
+      }
+    }
+    
+    // Al cargar la página, se verifica el estado del servidor y se carga la evaluación
+    document.addEventListener("DOMContentLoaded", () => {
+      checkServerStatus();
+      loadEvaluation();
+    });
+  </script>
 </body>
-</html> 
+</html>

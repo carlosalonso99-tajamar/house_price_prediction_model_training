@@ -1,0 +1,21 @@
+### Predicción de precio de vivienda - Advanced Model
+
+POST http://localhost:5000/api/predict
+Content-Type: application/json
+
+{
+  "GrLivArea": 1500,
+  "TotalBsmtSF": 800,
+  "TotRmsAbvGrd": 6,
+  "YearBuilt": 1990,
+  "YearRemodAdd": 2000,
+  "OverallQual": 7,
+  "OverallCond": 5,
+  "ExterQual": "Gd",
+  "ExterCond": "TA",
+  "GarageCars": 2,
+  "GarageArea": 500,
+  "KitchenQual": "Gd",
+  "FireplaceQu": "TA",
+  "Neighborhood": "NridgHt"
+}
